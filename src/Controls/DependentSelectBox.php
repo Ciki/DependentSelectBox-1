@@ -1,5 +1,4 @@
 <?php
-
 /**
  * This file is part of the NasExt extensions of Nette Framework
  *
@@ -14,7 +13,6 @@ namespace NasExt\Forms\Controls;
 use NasExt;
 use Nette;
 
-
 /**
  * @author Jáchym Toušek
  * @author Dusan Hudak
@@ -23,8 +21,8 @@ use Nette;
  */
 class DependentSelectBox extends Nette\Forms\Controls\SelectBox implements Nette\Application\UI\ISignalReceiver
 {
-	use NasExt\Forms\DependentTrait;
 
+	use NasExt\Forms\DependentTrait;
 	/** @var string */
 	const SIGNAL_NAME = 'load';
 
@@ -36,7 +34,7 @@ class DependentSelectBox extends Nette\Forms\Controls\SelectBox implements Nette
 	public function __construct($label, array $parents)
 	{
 		$this->parents = $parents;
-		$this->dependentCallbackParams = $this->parents;//default
+		$this->dependentCallbackParams = $this->parents; //default
 		parent::__construct($label);
 	}
 
@@ -45,7 +43,7 @@ class DependentSelectBox extends Nette\Forms\Controls\SelectBox implements Nette
 	 * @param string $signal
 	 * @return void
 	 */
-	public function signalReceived(string $signal) : void
+	public function signalReceived(string $signal): void
 	{
 		$presenter = $this->lookup('Nette\\Application\\UI\\Presenter');
 
@@ -60,7 +58,9 @@ class DependentSelectBox extends Nette\Forms\Controls\SelectBox implements Nette
 					}
 
 					if ($value !== null) {
-						$value = array_filter($value, static function ($val) {return !in_array($val, [null, '', []], true);});
+						$value = array_filter($value, static function ($val) {
+							return !in_array($val, [null, '', []], true);
+						});
 					}
 				}
 
@@ -74,7 +74,7 @@ class DependentSelectBox extends Nette\Forms\Controls\SelectBox implements Nette
 				'id' => $this->getHtmlId(),
 				'items' => $data->getPreparedItems(!is_array($this->disabled) ?: $this->disabled),
 				'value' => $data->getValue(),
-				'prompt' => $data->getPrompt() === null ? $this->translate($this->getPrompt()) : $this->translate($data->getPrompt()),
+				'prompt' => $this->translate($data->getPrompt() ?: $this->getPrompt()),
 				'disabledWhenEmpty' => $this->disabledWhenEmpty,
 			];
 			$presenter->sendPayload();
@@ -87,7 +87,9 @@ class DependentSelectBox extends Nette\Forms\Controls\SelectBox implements Nette
 	 */
 	private function tryLoadItems()
 	{
-		if ($this->dependentCallbackParams === array_filter($this->dependentCallbackParams, function ($p) {return !$p->hasErrors();})) {
+		if ($this->dependentCallbackParams === array_filter($this->dependentCallbackParams, function ($p) {
+				return !$p->hasErrors();
+			})) {
 			$cbParamValues = [];
 			foreach ($this->dependentCallbackParams as $param) {
 				$cbParamValues[$param->getName()] = $param->getValue();
@@ -96,13 +98,10 @@ class DependentSelectBox extends Nette\Forms\Controls\SelectBox implements Nette
 			$data = $this->getDependentData([$cbParamValues]);
 			$items = $data->getItems();
 
-
 			if ($this->getForm()->isSubmitted()) {
 				$this->setValue($this->value);
-
 			} elseif ($this->tempValue !== null) {
 				$this->setValue($this->tempValue);
-
 			} else {
 				$this->setValue($data->getValue());
 			}
@@ -110,7 +109,7 @@ class DependentSelectBox extends Nette\Forms\Controls\SelectBox implements Nette
 
 			$this->loadHttpData();
 			$this->setItems($items)
-				->setPrompt($data->getPrompt() === null ? $this->getPrompt() : $data->getPrompt());
+				->setPrompt($data->getPrompt() ?: $this->getPrompt());
 
 			if (count($items) === 0) {
 				if ($this->disabledWhenEmpty === true && !$this->isDisabled()) {
@@ -119,4 +118,6 @@ class DependentSelectBox extends Nette\Forms\Controls\SelectBox implements Nette
 			}
 		}
 	}
+
+
 }
