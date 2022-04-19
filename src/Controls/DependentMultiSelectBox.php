@@ -125,7 +125,9 @@ class DependentMultiSelectBox extends Nette\Forms\Controls\MultiSelectBox implem
 			$items = $data->getItems();
 
 			if ($this->getForm()->isSubmitted()) {
-				$this->setValue($this->value);
+//				$this->setValue($this->value);
+				// try to set tempValue first to enable components like Replicator to set new value on Container
+				$this->setValue($this->tempValue ?: $this->value);
 			} elseif ($this->tempValue !== null) {
 				$this->setValue($this->tempValue);
 			} else {
