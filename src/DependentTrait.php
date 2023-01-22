@@ -37,14 +37,17 @@ trait DependentTrait
 	/** @var bool */
 	private $disabledWhenEmpty;
 
-	/** @var mixed */
+	/** @var bool */
+	private $isLoadedDynamically = false;
+
+	/** @var mixed - array for multiselectbox, int|string|null otherwise */
 	private $tempValue;
 
 
 	/**
 	 * @return Nette\Utils\Html
 	 */
-	public function getControl() : Nette\Utils\Html
+	public function getControl(): Nette\Utils\Html
 	{
 		$this->tryLoadItems();
 
@@ -64,7 +67,8 @@ trait DependentTrait
 
 		$attrs['data-dependentselectbox-parents'] = Nette\Utils\Json::encode($parents);
 		$attrs['data-dependentselectbox-params'] = Nette\Utils\Json::encode($params);
-		$attrs['data-dependentselectbox'] = $form->getPresenter()->link($this->lookupPath('Nette\\Application\\UI\\Presenter') . Nette\ComponentModel\IComponent::NAME_SEPARATOR . self::SIGNAL_NAME . '!');
+		$attrs['data-dependentselectbox-load-dynamically'] = Nette\Utils\Json::encode(true);
+		$attrs['data-dependentselectbox'] = $this->isLoadedDynamically ? 'null' : $form->getPresenter()->link($this->lookupPath('Nette\\Application\\UI\\Presenter') . Nette\ComponentModel\IComponent::NAME_SEPARATOR . self::SIGNAL_NAME . '!');
 
 		$control->addAttributes($attrs);
 		return $control;
@@ -72,7 +76,7 @@ trait DependentTrait
 
 
 	/**
-	 * @return string|int
+	 * @return string|int|array
 	 */
 	public function getValue()
 	{
@@ -105,7 +109,7 @@ trait DependentTrait
 	public function setItems(array $items, bool $useKeys = true)
 	{
 		parent::setItems($items, $useKeys);
-		
+
 		if (!in_array($this->tempValue, [null, '', []], true)) {
 			parent::setValue($this->tempValue);
 		}
@@ -164,6 +168,13 @@ trait DependentTrait
 	public function setDisabledWhenEmpty($value = true)
 	{
 		$this->disabledWhenEmpty = $value;
+		return $this;
+	}
+
+
+	public function setIsLoadedDynamically(bool $isLoadedDynamically): self
+	{
+		$this->isLoadedDynamically = $isLoadedDynamically;
 		return $this;
 	}
 

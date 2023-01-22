@@ -6,12 +6,12 @@
 (function ($) {
 	$.fn.dependentSelectBox = function (options, listener) {
 
-		var callback = function () {};
-		if(typeof( options ) === 'function' ) {
+		var callback = function () { };
+		if (typeof (options) === 'function') {
 			callback = options;
 			options = null;
 		}
-		if(typeof( listener ) === 'function' ) {
+		if (typeof (listener) === 'function') {
 			callback = listener;
 		}
 
@@ -21,7 +21,8 @@
 			suggestTimeout: 350,
 			dataLinkName: 'dependentselectbox',
 			dataParentsName: 'dependentselectboxParents',
-			dataParamsName: 'dependentselectboxParams'
+			dataParamsName: 'dependentselectboxParams',
+			dataLoadDynamicallyName: 'dependentselectboxLoadDynamically',
 		}, options);
 
 
@@ -34,7 +35,7 @@
 			var signalLink = element.data(dsb.settings.dataLinkName);
 			var params = element.data(dsb.settings.dataParamsName);
 
-			if (signalLink === undefined) {
+			if (signalLink === undefined || signalLink === null) {
 				return false;
 			}
 
@@ -76,17 +77,26 @@
 		 * @param parentElement
 		 */
 		this.process = function (e, parentElement, dependentSelect) {
+			var invalidCb = () => {
+				// var $prompt = $('<option>').attr('value', '');
+				// var params = element.data(dsb.settings.dataParamsName);
+				// .text(data.prompt);
+				dependentSelect.empty()
+				// .append($prompt)
+				.change();
+				dependentSelect.selectpicker && dependentSelect.selectpicker('refresh');
+			};
 
 			// Validate if signalLink exist
 			var signalLink = dsb.getSignalLink(dependentSelect);
-			if (signalLink == false) {
+			if (signalLink === false) {
+				invalidCb();
 				return false;
 			}
 			// skip cascaded data loading if parentEl is not yet set, empty dependentSelect & add empty prompt
 			var parentElVal = parentElement.val();
 			if (!parentElVal) {
-				dependentSelect.empty().append('<option value="" />').change();
-				dependentSelect.selectpicker && dependentSelect.selectpicker('refresh');
+				invalidCb();
 				return false;
 			}
 			// Send ajax request
@@ -194,7 +204,6 @@
 		 */
 		return this.each(function () {
 			var $dependentSelect = $(this);
-
 			var parents = $($dependentSelect).data(dsb.settings.dataParentsName);
 			$.each(parents, function (name, id) {
 				var parentElement = $('#' + id);

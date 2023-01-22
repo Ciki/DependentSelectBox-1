@@ -110,8 +110,17 @@ class DependentSelectBox extends Nette\Forms\Controls\SelectBox implements Nette
 
 
 			$this->loadHttpData();
-			$this->setItems($items)
-				->setPrompt($data->getPrompt() ?: $this->getPrompt());
+
+			if ($this->isLoadedDynamically) {
+				// set tempValue as the only value if valid
+				if ($this->tempValue && array_key_exists($this->tempValue, $items)) {
+					$this->setItems(["$this->tempValue" => $items["$this->tempValue"]]); // "" used for float tempValue
+				}
+			} else {
+				$this->setItems($items);
+			}
+
+			$this->setPrompt($data->getPrompt() ?: $this->getPrompt());
 
 			if (count($items) === 0) {
 				if ($this->disabledWhenEmpty === true && !$this->isDisabled()) {

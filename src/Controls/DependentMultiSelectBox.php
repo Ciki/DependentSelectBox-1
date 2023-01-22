@@ -134,9 +134,16 @@ class DependentMultiSelectBox extends Nette\Forms\Controls\MultiSelectBox implem
 				$this->setValue($data->getValue());
 			}
 
-
 			$this->loadHttpData();
-			$this->setItems($items);
+
+			if ($this->isLoadedDynamically) {
+				// set tempValue as the only values if valid
+				if ($this->tempValue) {
+					$this->setItems(array_intersect_key($items, array_combine($this->tempValue, $this->tempValue)));
+				}
+			} else {
+				$this->setItems($items);
+			}
 
 			if (count($items) === 0) {
 				if ($this->disabledWhenEmpty === true && !$this->isDisabled()) {
