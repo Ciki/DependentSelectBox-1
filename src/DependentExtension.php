@@ -22,21 +22,14 @@ use Nette;
  */
 class DependentExtension extends Nette\DI\CompilerExtension
 {
-	/**
-	 * @param Nette\PhpGenerator\ClassType $class
-	 * @return void
-	 */
-	public function afterCompile(Nette\PhpGenerator\ClassType $class)
+	public function afterCompile(Nette\PhpGenerator\ClassType $class): void
 	{
 		$initialize = $class->getMethod('initialize');
 		$initialize->addBody(__CLASS__ . '::registerControls();');
 	}
 
 
-	/**
-	 * @return void
-	 */
-	public static function registerControls()
+	public static function registerControls(): void
 	{
 		Nette\Forms\Container::extensionMethod('addDependentSelectBox', function (Nette\Forms\Container $container, $name, $label, Nette\Forms\IControl ...$parents) {
 			return $container[$name] = new NasExt\Forms\Controls\DependentSelectBox($label, $parents);

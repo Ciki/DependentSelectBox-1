@@ -1,4 +1,5 @@
 <?php
+
 /**
  * This file is part of the NasExt extensions of Nette Framework
  *
@@ -33,7 +34,7 @@ class DependentMultiSelectBox extends Nette\Forms\Controls\MultiSelectBox implem
 	 * @param string $label
 	 * @param array<int, Nette\Forms\IControl> $parents
 	 */
-	public function __construct($label, array $parents)
+	public function __construct(string $label, array $parents)
 	{
 		$this->parents = $parents;
 		$this->dependentCallbackParams = $this->parents; //default
@@ -42,11 +43,9 @@ class DependentMultiSelectBox extends Nette\Forms\Controls\MultiSelectBox implem
 
 
 	/**
-	 * @throws $value
-	 * @param bool
-	 * @return self
+	 * @throws Nette\InvalidArgumentException
 	 */
-	public function setDisabled($value = true)
+	public function setDisabled(/*bool|array*/$value = true): self
 	{
 		if (is_array($value)) {
 			throw new Nette\InvalidArgumentException('NasExt\\Forms\\Controls\\DependentMultiSelectBox not supported disabled items!');
@@ -56,19 +55,12 @@ class DependentMultiSelectBox extends Nette\Forms\Controls\MultiSelectBox implem
 	}
 
 
-	/**
-	 * @return array
-	 */
 	public function getValue(): array
 	{
 		return $this->traitGetValue();
 	}
 
 
-	/**
-	 * @param string $signal
-	 * @return void
-	 */
 	public function signalReceived(string $signal): void
 	{
 		$presenter = $this->lookup('Nette\\Application\\UI\\Presenter');
@@ -97,7 +89,7 @@ class DependentMultiSelectBox extends Nette\Forms\Controls\MultiSelectBox implem
 			$data = $this->getDependentData([$cbParamNames]);
 			$presenter->payload->dependentselectbox = [
 				'id' => $this->getHtmlId(),
-				'items' => $data->getPreparedItems(!is_array($this->disabled) ?: $this->disabled),
+				'items' => $data->getPreparedItems($this->disabled),
 				'value' => $data->getValue(),
 				'prompt' => false,
 				'disabledWhenEmpty' => $this->disabledWhenEmpty,
@@ -108,14 +100,11 @@ class DependentMultiSelectBox extends Nette\Forms\Controls\MultiSelectBox implem
 	}
 
 
-	/**
-	 * @return void
-	 */
-	private function tryLoadItems()
+	private function tryLoadItems(): void
 	{
 		if ($this->dependentCallbackParams === array_filter($this->dependentCallbackParams, function ($p) {
-				return !$p->hasErrors();
-			})) {
+			return !$p->hasErrors();
+		})) {
 			$cbParamValues = [];
 			foreach ($this->dependentCallbackParams as $param) {
 				$cbParamValues[$param->getName()] = $param->getValue();
@@ -125,7 +114,7 @@ class DependentMultiSelectBox extends Nette\Forms\Controls\MultiSelectBox implem
 			$items = $data->getItems();
 
 			if ($this->getForm()->isSubmitted()) {
-//				$this->setValue($this->value);
+				// $this->setValue($this->value);
 				// try to set tempValue first to enable components like Replicator to set new value on Container
 				$this->setValue($this->tempValue ?: $this->value);
 			} elseif ($this->tempValue !== null) {
@@ -139,7 +128,7 @@ class DependentMultiSelectBox extends Nette\Forms\Controls\MultiSelectBox implem
 			if ($this->isLoadedDynamically) {
 				// set tempValue as the only values if valid
 				if ($this->tempValue) {
-					$this->setItems(array_intersect_key($items, array_combine($this->tempValue, $this->tempValue)));
+					$this->setItems(array_intersect_key($items, array_combine((array) $this->tempValue, (array) $this->tempValue)));
 				}
 			} else {
 				$this->setItems($items);
@@ -152,6 +141,4 @@ class DependentMultiSelectBox extends Nette\Forms\Controls\MultiSelectBox implem
 			}
 		}
 	}
-
-
 }

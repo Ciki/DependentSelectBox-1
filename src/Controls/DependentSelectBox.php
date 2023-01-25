@@ -1,4 +1,5 @@
 <?php
+
 /**
  * This file is part of the NasExt extensions of Nette Framework
  *
@@ -31,7 +32,7 @@ class DependentSelectBox extends Nette\Forms\Controls\SelectBox implements Nette
 	 * @param string $label
 	 * @param array<int, Nette\Forms\IControl> $parents
 	 */
-	public function __construct($label, array $parents)
+	public function __construct(string $label, array $parents)
 	{
 		$this->parents = $parents;
 		$this->dependentCallbackParams = $this->parents; //default
@@ -39,10 +40,6 @@ class DependentSelectBox extends Nette\Forms\Controls\SelectBox implements Nette
 	}
 
 
-	/**
-	 * @param string $signal
-	 * @return void
-	 */
 	public function signalReceived(string $signal): void
 	{
 		$presenter = $this->lookup('Nette\\Application\\UI\\Presenter');
@@ -72,7 +69,7 @@ class DependentSelectBox extends Nette\Forms\Controls\SelectBox implements Nette
 			$data = $this->getDependentData([$cbParamNames]);
 			$presenter->payload->dependentselectbox = [
 				'id' => $this->getHtmlId(),
-				'items' => $data->getPreparedItems(!is_array($this->disabled) ?: $this->disabled),
+				'items' => $data->getPreparedItems($this->disabled),
 				'value' => $data->getValue(),
 				'prompt' => $this->translate($data->getPrompt() ?: $this->getPrompt()),
 				'disabledWhenEmpty' => $this->disabledWhenEmpty,
@@ -82,14 +79,11 @@ class DependentSelectBox extends Nette\Forms\Controls\SelectBox implements Nette
 	}
 
 
-	/**
-	 * @return void
-	 */
-	private function tryLoadItems()
+	private function tryLoadItems(): void
 	{
 		if ($this->dependentCallbackParams === array_filter($this->dependentCallbackParams, function ($p) {
-				return !$p->hasErrors();
-			})) {
+			return !$p->hasErrors();
+		})) {
 			$cbParamValues = [];
 			foreach ($this->dependentCallbackParams as $param) {
 				$cbParamValues[$param->getName()] = $param->getValue();
@@ -99,7 +93,7 @@ class DependentSelectBox extends Nette\Forms\Controls\SelectBox implements Nette
 			$items = $data->getItems();
 
 			if ($this->getForm()->isSubmitted()) {
-//				$this->setValue($this->value);
+				// $this->setValue($this->value);
 				// try to set tempValue first to enable components like Replicator to set new value on Container
 				$this->setValue($this->tempValue ?: $this->value);
 			} elseif ($this->tempValue !== null) {
@@ -129,6 +123,4 @@ class DependentSelectBox extends Nette\Forms\Controls\SelectBox implements Nette
 			}
 		}
 	}
-
-
 }

@@ -12,12 +12,12 @@
 namespace NasExt\Forms;
 
 use Nette;
-
+use Nette\Utils\Html;
 
 /**
  * @property array $items
- * @property string|int $value
- * @property string $prompt
+ * @property array|string|int|null $value
+ * @property ?string $prompt
  *
  * @author Dusan Hudak
  * @author Ales Wita
@@ -27,98 +27,67 @@ class DependentData
 {
 	use Nette\SmartObject;
 
-	/** @var array */
-	private $items = [];
+	private array $items = [];
 
-	/** @var string|int */
-	private $value;
+	private array|string|int|null $value;
 
-	/** @var string */
-	private $prompt;
+	private ?string $prompt;
 
 
-	/**
-	 * @param array $items
-	 * @param string|int $value
-	 * @param string $prompt
-	 */
-	public function __construct(array $items = [], $value = null, $prompt = null)
-	{
+	public function __construct(
+		array $items = [],
+		string|int|null $value = null,
+		?string $prompt = null
+	) {
 		$this->items = $items;
 		$this->value = $value;
 		$this->prompt = $prompt;
 	}
 
 
-	/**
-	 * @return array
-	 */
-	public function getItems()
+	public function getItems(): array
 	{
 		return $this->items;
 	}
 
 
-	/**
-	 * @param array $items
-	 * @return self
-	 */
-	public function setItems(array $items)
+	public function setItems(array $items): self
 	{
 		$this->items = $items;
 		return $this;
 	}
 
 
-	/**
-	 * @return string|int
-	 */
-	public function getValue()
+	public function getValue(): array|string|int|null
 	{
 		return $this->value;
 	}
 
 
-	/**
-	 * @param string|int $value
-	 * @return self
-	 */
-	public function setValue($value)
+	public function setValue(array|string|int|null $value): self
 	{
 		$this->value = $value;
 		return $this;
 	}
 
 
-	/**
-	 * @return string
-	 */
-	public function getPrompt()
+	public function getPrompt(): ?string
 	{
 		return $this->prompt;
 	}
 
 
-	/**
-	 * @param string $value
-	 * @return self
-	 */
-	public function setPrompt($value)
+	public function setPrompt(string $value): self
 	{
 		$this->prompt = $value;
 		return $this;
 	}
 
 
-	/**
-	 * @param array $disabledItems
-	 * @return array
-	 */
-	public function getPreparedItems($disabledItems = null)
+	public function getPreparedItems(/*bool|bool[]*/ bool|array $disabledItems = []): array
 	{
 		$items = [];
 		foreach ($this->items as $key => $item) {
-			$elements = [];
 			if (is_array($item)) {
 				$groupItems = [];
 				foreach ($item as $innerKey => $innerItem) {
@@ -130,7 +99,6 @@ class DependentData
 					'key' => $key,
 					'value' => $groupItems,
 				];
-
 			} else {
 				$el = $this->getPreparedElement($key, $item, $disabledItems);
 				$this->addElementToItemsList($items, $el);
@@ -141,23 +109,16 @@ class DependentData
 	}
 
 
-	/**
-	 * @param string $key
-	 * @param mixed $item
-	 * @param array|null $disabledItems
-	 * @return Nette\Utils\Html
-	 */
-	private function getPreparedElement($key, $item, $disabledItems = null)
+	private function getPreparedElement(string $key, mixed $item, /*bool|bool[]*/ bool|array $disabledItems = []): Html
 	{
-		if (!($item instanceof Nette\Utils\Html)) {
-			$el = Nette\Utils\Html::el('option')->value($key)->setText($item);
-
+		if (!($item instanceof Html)) {
+			$el = Html::el('option')->value($key)->setText($item);
 		} else {
 			$el = $item;
 		}
 
 		// disable element
-		if (is_array($disabledItems) && array_key_exists($key, $disabledItems) && $disabledItems[$key] === true) {
+		if ($disabledItems === true || (is_array($disabledItems) && array_key_exists($key, $disabledItems) && $disabledItems[$key] === true)) {
 			$el->disabled(true);
 		}
 
@@ -165,11 +126,7 @@ class DependentData
 	}
 
 
-	/**
-	 * @param array &$items
-	 * @param Nette\Utils\Html $el
-	 */
-	private function addElementToItemsList(&$items, $el)
+	private function addElementToItemsList(array &$items, Html $el): void
 	{
 		$items[$el->getAttribute('value')] = [
 			'key' => $el->getValue(),
