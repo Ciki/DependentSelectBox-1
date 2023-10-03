@@ -30,7 +30,7 @@ class DependentSelectBox extends Nette\Forms\Controls\SelectBox implements Nette
 
 	/**
 	 * @param string $label
-	 * @param array<int, Nette\Forms\IControl> $parents
+	 * @param array<int, Nette\Forms\Control> $parents
 	 */
 	public function __construct(string $label, array $parents)
 	{
