@@ -139,6 +139,11 @@ class DependentMultiSelectBox extends Nette\Forms\Controls\MultiSelectBox implem
 					$this->setDisabled();
 				}
 			}
+		} else {
+			// if there's an error in parent controls => set $this->value to empty array, which is valid default empty value.
+			// otherwise it could/would be null which is not valid
+			$this->value = [];
+			// $this->setValue([]);
 		}
 	}
 }
