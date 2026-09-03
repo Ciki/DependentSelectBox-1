@@ -207,6 +207,39 @@ final class DependentSelectBoxTest extends Tester\TestCase
 
 
 	/**
+	 * A default set before the items exist survives repeated reads on a GET (every read re-runs the
+	 * item load, which resets the control's value) and is validated against the items once loaded.
+	 * @return void
+	 */
+	public function testDefaultValueSurvivesRepeatedLoads()
+	{
+		$configurator = new Nette\Configurator();
+		$configurator->setTempDirectory(TEMP_DIR);
+		$configurator->addConfig($this->getConfig());
+
+		$container = $configurator->createContainer();
+		$presenterFactory = $container->getByType('Nette\\Application\\IPresenterFactory');
+
+		$presenter = $presenterFactory->createPresenter('Base');
+		$presenter->autoCanonicalize = false;
+		$presenter['dependentSelectForm3']->setDefaults(['select' => 1, 'dependentSelect' => 2]);
+		$presenter->run(new Nette\Application\Request('Base', 'GET', ['action' => 'dependentSelect1']));
+
+		$dependentSelect = $presenter['dependentSelectForm3']['dependentSelect'];
+		Tester\Assert::same(2, $dependentSelect->getValue());
+		Tester\Assert::same(2, $dependentSelect->getValue());
+		Tester\Assert::contains('<option value="2" selected>', (string) $dependentSelect->getControl());
+
+		$presenter = $presenterFactory->createPresenter('Base');
+		$presenter->autoCanonicalize = false;
+		$presenter['dependentSelectForm3']->setDefaults(['select' => 1, 'dependentSelect' => 999]);
+		$presenter->run(new Nette\Application\Request('Base', 'GET', ['action' => 'dependentSelect1']));
+
+		Tester\Assert::null($presenter['dependentSelectForm3']['dependentSelect']->getValue());
+	}
+
+
+	/**
 	 * @return void
 	 */
 	public function testFive()

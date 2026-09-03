@@ -39,6 +39,9 @@ trait DependentTrait
 
 	private string|int|float|array|null $tempValue = null;
 
+	/** the items came from the dependent callback - getValue() can validate against them */
+	private bool $itemsLoaded = false;
+
 
 	public function getControl(): Html
 	{
@@ -72,7 +75,9 @@ trait DependentTrait
 	{
 		$this->tryLoadItems();
 
-		if (!in_array($this->tempValue, [null, '', []], true)) {
+		// with the items loaded the value is validated against them like in the parent control; the
+		// pending value is only answered while the items cannot be loaded yet
+		if (!$this->itemsLoaded && !in_array($this->tempValue, [null, '', []], true)) {
 			return $this->tempValue;
 		}
 
@@ -91,12 +96,12 @@ trait DependentTrait
 	{
 		parent::setItems($items, $useKeys);
 
+		// the pending value is kept: tryLoadItems() re-runs loadHttpData() on every read, which wipes the
+		// value on a GET, and re-applies it from here
 		if (!in_array($this->tempValue, [null, '', []], true)) {
 			parent::setValue($this->tempValue);
-			// applied - from now on getValue() validates against the items like the parent control does;
-			// the pending value only bridges the time before the items can be loaded
-			$this->tempValue = null;
 		}
+		$this->itemsLoaded = true;
 
 		return $this;
 	}
