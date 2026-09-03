@@ -113,6 +113,27 @@ final class BasePresenter extends Nette\Application\UI\Presenter
 	/**
 	 * @return Nette\Application\UI\Form
 	 */
+	protected function createComponentDependentSelectForm3()
+	{
+		$form = new Nette\Application\UI\Form;
+
+		$form->addSelect('select', 'Select', [1 => 'First', 2 => 'Second'])
+			->setPrompt('---');
+
+		$form->addDependentSelectBox('dependentSelect', 'Dependent select', $form['select'])
+			->setDependentCallback([$this, 'dependentCallback'])
+			->setPrompt('Select select first')
+			->checkDefaultValue(false);
+
+		$form->addSubmit('submit', 'Submit');
+
+		return $form;
+	}
+
+
+	/**
+	 * @return Nette\Application\UI\Form
+	 */
 	protected function createComponentDependentSelectForm2()
 	{
 		$form = new Nette\Application\UI\Form;

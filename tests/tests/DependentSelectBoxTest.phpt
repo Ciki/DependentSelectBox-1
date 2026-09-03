@@ -171,6 +171,42 @@ final class DependentSelectBoxTest extends Tester\TestCase
 
 
 	/**
+	 * A posted key outside the loaded items is not a value: getValue() answers null even with
+	 * checkDefaultValue(false) (the raw key stays reachable via getRawValue()), a key inside is.
+	 * @return void
+	 */
+	public function testPostedKeyOutsideItems()
+	{
+		$configurator = new Nette\Configurator();
+		$configurator->setTempDirectory(TEMP_DIR);
+		$configurator->addConfig($this->getConfig());
+
+		$container = $configurator->createContainer();
+		$presenterFactory = $container->getByType('Nette\\Application\\IPresenterFactory');
+
+		$presenter = $presenterFactory->createPresenter('Base');
+		$presenter->autoCanonicalize = false;
+		$request = new Nette\Application\Request('Base', 'POST', ['action' => 'dependentSelect1'], ['_do' => 'dependentSelectForm3-submit', 'select' => 1, 'dependentSelect' => 999]);
+		$presenter->run($request);
+
+		$form = $presenter['dependentSelectForm3'];
+		$dependentSelect = $form['dependentSelect'];
+
+		Tester\Assert::true($form->isSubmitted());
+		Tester\Assert::null($dependentSelect->getValue());
+		Tester\Assert::same(999, $dependentSelect->getRawValue()); // the posted key, cast by the array-key rules
+		Tester\Assert::same([1 => 'First', 2 => 'Still first'], $dependentSelect->getItems());
+
+		$presenter = $presenterFactory->createPresenter('Base');
+		$presenter->autoCanonicalize = false;
+		$request = new Nette\Application\Request('Base', 'POST', ['action' => 'dependentSelect1'], ['_do' => 'dependentSelectForm3-submit', 'select' => 1, 'dependentSelect' => 2]);
+		$presenter->run($request);
+
+		Tester\Assert::same(2, $presenter['dependentSelectForm3']['dependentSelect']->getValue());
+	}
+
+
+	/**
 	 * @return void
 	 */
 	public function testFive()

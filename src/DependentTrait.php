@@ -93,6 +93,9 @@ trait DependentTrait
 
 		if (!in_array($this->tempValue, [null, '', []], true)) {
 			parent::setValue($this->tempValue);
+			// applied - from now on getValue() validates against the items like the parent control does;
+			// the pending value only bridges the time before the items can be loaded
+			$this->tempValue = null;
 		}
 
 		return $this;
