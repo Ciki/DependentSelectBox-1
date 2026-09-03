@@ -19,6 +19,6 @@ require_once __DIR__ . '/app/router/Router.php';
 
 Tester\Environment::setup();
 
-define('TEMP_DIR', __DIR__ . '/tmp/' . lcg_value());
+define('TEMP_DIR', __DIR__ . '/tmp/' . getmypid() . '-' . random_int(0, PHP_INT_MAX));
 @mkdir(dirname(TEMP_DIR));
 @mkdir(TEMP_DIR);

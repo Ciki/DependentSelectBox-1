@@ -76,11 +76,13 @@ final class DependentSelectBoxTest extends Tester\TestCase
 		Tester\Assert::count(1, $data);
 
 		$foo = (array) $data[0];
-		Tester\Assert::count(4, $foo['@attributes']);
+		Tester\Assert::count(6, $foo['@attributes']);
 		Tester\Assert::same($control->getAttribute('name'), $foo['@attributes']['name']);
 		Tester\Assert::same($control->getAttribute('id'), $foo['@attributes']['id']);
 		Tester\Assert::same($control->getAttribute('data-dependentselectbox'), $foo['@attributes']['data-dependentselectbox']);
 		Tester\Assert::same($control->getAttribute('data-dependentselectbox-parents'), $foo['@attributes']['data-dependentselectbox-parents']);
+		Tester\Assert::same($control->getAttribute('data-dependentselectbox-params'), $foo['@attributes']['data-dependentselectbox-params']);
+		Tester\Assert::same('true', $foo['@attributes']['data-dependentselectbox-load-dynamically']);
 
 		Tester\Assert::same('Select select first', $foo['option']);
 	}
@@ -103,8 +105,9 @@ final class DependentSelectBoxTest extends Tester\TestCase
 		$request = new Nette\Application\Request('Base', 'POST', ['action' => 'dependentSelect1'], ['_do' => 'dependentSelectForm1-submit'], ['select' => 1, 'dependentSelect' => 1]);
 		$response = $presenter->run($request);
 
-		Tester\Assert::true($response instanceof Nette\Application\Responses\TextResponse);
-		Tester\Assert::true($response->getSource() instanceof Nette\Application\UI\ITemplate);
+		// a processed form redirects (PRG) - as a payload for the AJAX client
+		Tester\Assert::true($response instanceof Nette\Application\Responses\JsonResponse);
+		Tester\Assert::true(isset($response->getPayload()->redirect));
 
 
 		// check dependent select
@@ -116,7 +119,6 @@ final class DependentSelectBoxTest extends Tester\TestCase
 
 
 	/**
-	 * @throws Nette\InvalidArgumentException Value '3' is out of allowed set [1, 2] in field 'dependentSelect'.
 	 * @return void
 	 */
 	public function testThree()
@@ -132,6 +134,12 @@ final class DependentSelectBoxTest extends Tester\TestCase
 		$presenter->autoCanonicalize = false;
 		$request = new Nette\Application\Request('Base', 'POST', ['action' => 'dependentSelect1'], ['_do' => 'dependentSelectForm1-submit'], ['select' => 1, 'dependentSelect' => 3]);
 		$response = $presenter->run($request);
+
+		Tester\Assert::true($response instanceof Nette\Application\Responses\JsonResponse);
+		// a key outside the loaded items is refused when the value is read (checkDefaultValue is on)
+		Tester\Assert::exception(function () use ($presenter): void {
+			$presenter['dependentSelectForm1']['dependentSelect']->getValue();
+		}, Nette\InvalidArgumentException::class);
 	}
 
 
@@ -185,12 +193,12 @@ final class DependentSelectBoxTest extends Tester\TestCase
 		Tester\Assert::same([
 			'id' => 'frm-dependentSelectForm1-dependentSelect',
 			'items' => [
-				1 => ['key' => 1, 'value' => 'First', 'attributes' => ['value' => 1]],
-				2 => ['key' => 2, 'value' => 'Still first', 'attributes' => ['value' => 2]],
+				['key' => '1', 'value' => 'First', 'attributes' => ['value' => '1']],
+				['key' => '2', 'value' => 'Still first', 'attributes' => ['value' => '2']],
 			],
 			'value' => null,
 			'prompt' => '---',
-			'disabledWhenEmpty' => null,
+			'disabledWhenEmpty' => false,
 		], $response->getPayload()->dependentselectbox);
 	}
 
@@ -344,7 +352,9 @@ services:
 	base.presenter:
 		class: NasExt\Forms\Tests\App\Presenters\BasePresenter
 
-	routing.router: NasExt\Forms\Tests\App\Router\Router::createRouter', 'neon');
+	routing.router: NasExt\Forms\Tests\App\Router\Router::createRouter
+	# AJAX client: no PRG redirect after a form POST, JSON payload for the load signal
+	http.request: Nette\Http\Request(Nette\Http\UrlScript(\'http://base/\'), [], [], [], {x-requested-with: XMLHttpRequest})', 'neon');
 	}
 }
 

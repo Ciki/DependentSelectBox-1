@@ -76,10 +76,10 @@ final class DependentMultiSelectBoxTest extends Tester\TestCase
 		Tester\Assert::count(1, $data);
 
 		$foo = (array) $data[0];
-		Tester\Assert::count(5, $foo['@attributes']);
+		Tester\Assert::count(7, $foo['@attributes']);
 		Tester\Assert::same($control->getAttribute('name'), $foo['@attributes']['name']);
 		Tester\Assert::same($control->getAttribute('id'), $foo['@attributes']['id']);
-		Tester\Assert::same('multiple', $foo['@attributes']['multiple']);
+		Tester\Assert::true(isset($foo['@attributes']['multiple'])); // boolean attribute, rendered without a value
 		Tester\Assert::same($control->getAttribute('data-dependentselectbox'), $foo['@attributes']['data-dependentselectbox']);
 		Tester\Assert::same($control->getAttribute('data-dependentselectbox-parents'), $foo['@attributes']['data-dependentselectbox-parents']);
 	}
@@ -102,8 +102,9 @@ final class DependentMultiSelectBoxTest extends Tester\TestCase
 		$request = new Nette\Application\Request('Base', 'POST', ['action' => 'dependentMultiSelect1'], ['_do' => 'dependentMultiSelectForm1-submit'], ['select' => 1, 'dependentMultiSelect' => [1]]);
 		$response = $presenter->run($request);
 
-		Tester\Assert::true($response instanceof Nette\Application\Responses\TextResponse);
-		Tester\Assert::true($response->getSource() instanceof Nette\Application\UI\ITemplate);
+		// a processed form redirects (PRG) - as a payload for the AJAX client
+		Tester\Assert::true($response instanceof Nette\Application\Responses\JsonResponse);
+		Tester\Assert::true(isset($response->getPayload()->redirect));
 
 
 		// check multi dependent select
@@ -115,7 +116,6 @@ final class DependentMultiSelectBoxTest extends Tester\TestCase
 
 
 	/**
-	 * @throws Nette\InvalidArgumentException Values '3', '4' are out of allowed set [1, 2] in field 'dependentMultiSelect'.
 	 * @return void
 	 */
 	public function testThree()
@@ -132,7 +132,11 @@ final class DependentMultiSelectBoxTest extends Tester\TestCase
 		$request = new Nette\Application\Request('Base', 'POST', ['action' => 'dependentMultiSelect1'], ['_do' => 'dependentMultiSelectForm1-submit'], ['select' => 1, 'dependentMultiSelect' => [3, 4]]);
 		$response = $presenter->run($request);
 
-		$presenter['dependentMultiSelectForm1']->getValues();// must load values for throws exception
+		Tester\Assert::true($response instanceof Nette\Application\Responses\JsonResponse);
+		// keys outside the loaded items are refused when the values are read (checkDefaultValue is on)
+		Tester\Assert::exception(function () use ($presenter): void {
+			$presenter['dependentMultiSelectForm1']->getValues();
+		}, Nette\InvalidArgumentException::class);
 	}
 
 
@@ -186,12 +190,12 @@ final class DependentMultiSelectBoxTest extends Tester\TestCase
 		Tester\Assert::same([
 			'id' => 'frm-dependentMultiSelectForm1-dependentMultiSelect',
 			'items' => [
-				1 => ['key' => 1, 'value' => 'First', 'attributes' => ['value' => 1]],
-				2 => ['key' => 2, 'value' => 'Still first', 'attributes' => ['value' => 2]],
+				['key' => '1', 'value' => 'First', 'attributes' => ['value' => '1']],
+				['key' => '2', 'value' => 'Still first', 'attributes' => ['value' => '2']],
 			],
 			'value' => null,
 			'prompt' => false,
-			'disabledWhenEmpty' => null,
+			'disabledWhenEmpty' => false,
 		], $response->getPayload()->dependentselectbox);
 	}
 
@@ -347,7 +351,9 @@ services:
 	base.presenter:
 		class: NasExt\Forms\Tests\App\Presenters\BasePresenter
 
-	routing.router: NasExt\Forms\Tests\App\Router\Router::createRouter', 'neon');
+	routing.router: NasExt\Forms\Tests\App\Router\Router::createRouter
+	# AJAX client: no PRG redirect after a form POST, JSON payload for the load signal
+	http.request: Nette\Http\Request(Nette\Http\UrlScript(\'http://base/\'), [], [], [], {x-requested-with: XMLHttpRequest})', 'neon');
 	}
 }
 

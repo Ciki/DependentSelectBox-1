@@ -20,13 +20,10 @@ use Nette;
  */
 final class Router
 {
-	/**
-	 * @return Nette\Application\IRouter
-	 */
-	public static function createRouter()
+	public static function createRouter(): Nette\Routing\Router
 	{
 		$route = new Nette\Application\Routers\RouteList;
-		$route[] = new Nette\Application\Routers\Route('<presenter>/<action>[/<id>]', 'Base:default');
+		$route->addRoute('<presenter>/<action>[/<id>]', 'Base:default');
 		return $route;
 	}
 }
